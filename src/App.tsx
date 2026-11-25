@@ -163,8 +163,8 @@ async function extractPdf(file: File): Promise<DocumentResult> {
 
       if (fragments.length > 0) {
         if (lineChanged) {
-          fragments.push("\\n");
-        } else if (horizontalGap > 1.5 && !/\\s$/.test(fragments[fragments.length - 1])) {
+          fragments.push("\n");
+        } else if (horizontalGap > 1.5 && !/\s$/.test(fragments[fragments.length - 1])) {
           fragments.push(" ");
         }
       }
@@ -176,8 +176,8 @@ async function extractPdf(file: File): Promise<DocumentResult> {
 
     const text = fragments
       .join("")
-      .replace(/[ \\t]+/g, " ")
-      .replace(/ *\\n */g, "\\n")
+      .replace(/[ \t]+/g, " ")
+      .replace(/ *\n */g, "\n")
       .trim();
 
     totalWords += text ? text.split(/\s+/).length : 0;
