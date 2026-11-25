@@ -143,15 +143,14 @@ async function extractPdf(file: File): Promise<DocumentResult> {
     // Rebuild text using PDF.js item positions instead of blindly
     // inserting spaces between every text fragment. This preserves
     // words and URLs that PDF generators split into adjacent items.
-    const textItems = content.items.filter(
-      (item): item is pdfjsLib.TextItem => "str" in item,
-    );
+    const textItems = content.items.filter((item) => "str" in item);
 
     const fragments: string[] = [];
     let previousY: number | null = null;
     let previousEndX: number | null = null;
 
     for (const item of textItems) {
+      if (!("str" in item)) continue;
       const value = item.str;
       if (!value) continue;
 
