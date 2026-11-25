@@ -97,7 +97,7 @@ function analyseText(pages: ExtractedPage[]): Evidence[] {
         // a user action. Avoid presenting it as a requirement.
         if (
           pattern.type === "requirement" &&
-          (/\\bendpoint\\b/i.test(text) || /https?:\\/\\//i.test(text))
+          (/\bendpoint\b/i.test(text) || /https?:\/\//i.test(text))
         ) {
           continue;
         }
