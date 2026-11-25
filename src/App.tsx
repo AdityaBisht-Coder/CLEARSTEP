@@ -92,6 +92,16 @@ function analyseText(pages: ExtractedPage[]): Evidence[] {
         if (pattern.type === "link") {
           text = text.replace(/[.,;:!?]+$/g, "");
         }
+
+        // An endpoint label followed by a URL is not, by itself,
+        // a user action. Avoid presenting it as a requirement.
+        if (
+          pattern.type === "requirement" &&
+          (/\\bendpoint\\b/i.test(text) || /https?:\\/\\//i.test(text))
+        ) {
+          continue;
+        }
+
         if (!text) continue;
 
         const normalized = pattern.type === "link"
@@ -130,11 +140,44 @@ async function extractPdf(file: File): Promise<DocumentResult> {
     const page = await pdf.getPage(pageNumber);
     const content = await page.getTextContent();
 
-    const text = content.items
-      .filter((item) => "str" in item)
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ")
-      .replace(/\s+/g, " ")
+    // Rebuild text using PDF.js item positions instead of blindly
+    // inserting spaces between every text fragment. This preserves
+    // words and URLs that PDF generators split into adjacent items.
+    const textItems = content.items.filter(
+      (item): item is pdfjsLib.TextItem => "str" in item,
+    );
+
+    const fragments: string[] = [];
+    let previousY: number | null = null;
+    let previousEndX: number | null = null;
+
+    for (const item of textItems) {
+      const value = item.str;
+      if (!value) continue;
+
+      const x = item.transform[4];
+      const y = item.transform[5];
+      const lineChanged = previousY !== null && Math.abs(y - previousY) > 2;
+      const horizontalGap =
+        previousEndX === null ? 0 : x - previousEndX;
+
+      if (fragments.length > 0) {
+        if (lineChanged) {
+          fragments.push("\\n");
+        } else if (horizontalGap > 1.5 && !/\\s$/.test(fragments[fragments.length - 1])) {
+          fragments.push(" ");
+        }
+      }
+
+      fragments.push(value);
+      previousY = y;
+      previousEndX = x + item.width;
+    }
+
+    const text = fragments
+      .join("")
+      .replace(/[ \\t]+/g, " ")
+      .replace(/ *\\n */g, "\\n")
       .trim();
 
     totalWords += text ? text.split(/\s+/).length : 0;
