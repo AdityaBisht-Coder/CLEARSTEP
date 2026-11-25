@@ -27,6 +27,7 @@ type Evidence = {
   title: string;
   text: string;
   page: number;
+  pages: number[];
 };
 
 type ExtractedPage = {
@@ -50,8 +51,7 @@ const navigation = [
 ];
 
 function analyseText(pages: ExtractedPage[]): Evidence[] {
-  const results: Evidence[] = [];
-  let id = 0;
+  const evidenceByKey = new Map<string, Evidence>();
 
   const patterns: {
     type: Evidence["type"];
@@ -60,53 +60,64 @@ function analyseText(pages: ExtractedPage[]): Evidence[] {
   }[] = [
     {
       type: "deadline",
-      title: "Possible deadline",
-      regex: /\b(?:deadline|due date|last date|submit(?:ted)? before|by\s+\d{1,2}|on or before)\b[^.!?\n]{0,120}/gi,
+      title: "Possible calendar deadline",
+      regex: /\\b(?:deadline|due date|last date|submit(?:ted)? before|on or before)\\b[^.!?\\n]{0,120}/gi,
+    },
+    {
+      type: "deadline",
+      title: "Relative time limit",
+      regex: /\\bwithin\\s+\\d+\\s+(?:(?:calendar|business)\\s+)?(?:hours?|days?|weeks?)\\b/gi,
     },
     {
       type: "email",
       title: "Email address",
-      regex: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+      regex: /\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi,
     },
     {
       type: "link",
       title: "Web link",
-      regex: /https?:\/\/[^\s<>"')\]]+/gi,
+      regex: /https?:\\/\\/[^\\s<>"')\\]]+/gi,
     },
     {
       type: "requirement",
       title: "Possible requirement",
-      regex: /\b(?:must|required to|should|need to|needs to|shall|submit|attach|include|provide|upload|register)\b[^.!?\n]{0,180}/gi,
+      regex: /\\b(?:must|required to|should|need to|needs to|shall|submit|attach|include|provide|upload|register)\\b[^.!?\\n]{0,180}/gi,
     },
   ];
 
   for (const page of pages) {
     for (const pattern of patterns) {
       for (const match of page.text.matchAll(pattern.regex)) {
-        const text = match[0].trim().replace(/\s+/g, " ");
+        let text = match[0].trim().replace(/\\s+/g, " ");
+        if (pattern.type === "link") {
+          text = text.replace(/[.,;:!?]+$/g, "");
+        }
         if (!text) continue;
 
-        const duplicate = results.some(
-          (item) =>
-            item.page === page.page &&
-            item.type === pattern.type &&
-            item.text.toLowerCase() === text.toLowerCase(),
-        );
+        const normalized = pattern.type === "link"
+          ? text.toLowerCase().replace(/#.*$/, "")
+          : text.toLowerCase().replace(/\\s+/g, " ").trim();
+        const key = `${pattern.type}:${normalized}`;
+        const existing = evidenceByKey.get(key);
 
-        if (duplicate) continue;
+        if (existing) {
+          if (!existing.pages.includes(page.page)) existing.pages.push(page.page);
+          continue;
+        }
 
-        results.push({
-          id: `evidence-${++id}`,
+        evidenceByKey.set(key, {
+          id: `evidence-${evidenceByKey.size + 1}`,
           type: pattern.type,
           title: pattern.title,
           text,
           page: page.page,
+          pages: [page.page],
         });
       }
     }
   }
 
-  return results;
+  return Array.from(evidenceByKey.values());
 }
 
 async function extractPdf(file: File): Promise<DocumentResult> {
@@ -417,7 +428,7 @@ function App() {
                           <strong>{item.title}</strong>
                           <span>{item.text}</span>
                         </span>
-                        <span className="page-reference">PAGE {item.page}</span>
+                        <span className="page-reference">PAGE{item.pages.length > 1 ? "S" : ""} {item.pages.join(", ")}</span>
                       </button>
                     ))}
                   </div>
@@ -430,7 +441,7 @@ function App() {
                       <button className="icon-button" onClick={() => setSelectedEvidence(null)} aria-label="Close details"><X size={18} /></button>
                     </div>
                     <div className="source-quote">{selectedEvidence.text}</div>
-                    <div className="source-meta"><FileText size={15} /> {document.name} · Page {selectedEvidence.page}</div>
+                    <div className="source-meta"><FileText size={15} /> {document.name} · Page{selectedEvidence.pages.length > 1 ? "s" : ""} {selectedEvidence.pages.join(", ")}</div>
                     <p className="disclaimer">This is a text-pattern match, not an AI-confirmed interpretation. Check the original PDF before relying on it.</p>
                   </section>
                 )}
@@ -521,7 +532,7 @@ function WorkflowCard({ number, icon, title, description }: { number: string; ic
 }
 
 function EvidenceRow({ item, onClick }: { item: Evidence; onClick: () => void }) {
-  return <button className="evidence-item" onClick={onClick}><span className={`evidence-type ${item.type}`}><ListChecks size={16} /></span><span className="evidence-copy"><strong>{item.title}</strong><span>{item.text}</span></span><span className="page-reference">PAGE {item.page}</span></button>;
+  return <button className="evidence-item" onClick={onClick}><span className={`evidence-type ${item.type}`}><ListChecks size={16} /></span><span className="evidence-copy"><strong>{item.title}</strong><span>{item.text}</span></span><span className="page-reference">PAGE{item.pages.length > 1 ? "S" : ""} {item.pages.join(", ")}</span></button>;
 }
 
 function ModulePage({ title, icon, description, document, children }: {
