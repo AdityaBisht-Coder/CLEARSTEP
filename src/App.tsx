@@ -61,34 +61,34 @@ function analyseText(pages: ExtractedPage[]): Evidence[] {
     {
       type: "deadline",
       title: "Possible calendar deadline",
-      regex: /\\b(?:deadline|due date|last date|submit(?:ted)? before|on or before)\\b[^.!?\\n]{0,120}/gi,
+      regex: /\b(?:deadline|due date|last date|submit(?:ted)? before|on or before)\b[^.!?\n]{0,120}/gi,
     },
     {
       type: "deadline",
       title: "Relative time limit",
-      regex: /\\bwithin\\s+\\d+\\s+(?:(?:calendar|business)\\s+)?(?:hours?|days?|weeks?)\\b/gi,
+      regex: /\bwithin\s+\d+\s+(?:(?:calendar|business)\s+)?(?:hours?|days?|weeks?)\b/gi,
     },
     {
       type: "email",
       title: "Email address",
-      regex: /\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi,
+      regex: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
     },
     {
       type: "link",
       title: "Web link",
-      regex: /https?:\\/\\/[^\\s<>"')\\]]+/gi,
+      regex: /https?:\/\/[^\s<>"')\]]+/gi,
     },
     {
       type: "requirement",
       title: "Possible requirement",
-      regex: /\\b(?:must|required to|should|need to|needs to|shall|submit|attach|include|provide|upload|register)\\b[^.!?\\n]{0,180}/gi,
+      regex: /\b(?:must|required to|should|need to|needs to|shall|submit|attach|include|provide|upload|register)\b[^.!?\n]{0,180}/gi,
     },
   ];
 
   for (const page of pages) {
     for (const pattern of patterns) {
       for (const match of page.text.matchAll(pattern.regex)) {
-        let text = match[0].trim().replace(/\\s+/g, " ");
+        let text = match[0].trim().replace(/\s+/g, " ");
         if (pattern.type === "link") {
           text = text.replace(/[.,;:!?]+$/g, "");
         }
@@ -96,7 +96,7 @@ function analyseText(pages: ExtractedPage[]): Evidence[] {
 
         const normalized = pattern.type === "link"
           ? text.toLowerCase().replace(/#.*$/, "")
-          : text.toLowerCase().replace(/\\s+/g, " ").trim();
+          : text.toLowerCase().replace(/\s+/g, " ").trim();
         const key = `${pattern.type}:${normalized}`;
         const existing = evidenceByKey.get(key);
 
