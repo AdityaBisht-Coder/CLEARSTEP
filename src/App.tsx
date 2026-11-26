@@ -42,6 +42,14 @@ type DocumentResult = {
   totalWords: number;
 };
 
+type PlannedAction = {
+  id: string;
+  text: string;
+  source: string;
+  pages: number[];
+  completed: boolean;
+};
+
 const navigation = [
   { name: "Dashboard" as Page, icon: LayoutDashboard },
   { name: "Documents" as Page, icon: FileText },
@@ -199,6 +207,8 @@ function App() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
+  const [actions, setActions] = useState<PlannedAction[]>([]);
+  const [newActionText, setNewActionText] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function selectFile(file?: File) {
@@ -222,6 +232,18 @@ function App() {
       const result = await extractPdf(file);
       setDocument(result);
       setSelectedEvidence(null);
+      setActions(
+        result.evidence
+          .filter((item) => item.type === "requirement" || item.type === "deadline")
+          .filter((item) => item.text.length >= 28)
+          .map((item) => ({
+            id: item.id,
+            text: item.text,
+            source: item.title,
+            pages: item.pages,
+            completed: false,
+          })),
+      );
     } catch (err) {
       console.error(err);
       setError(
@@ -506,15 +528,94 @@ function App() {
         )}
 
         {activePage === "Action Planner" && (
-          <ModulePage title="Action Planner" icon={<ListChecks size={25} />} description="Candidate actions extracted from your document." document={document}>
-            {document ? (
-              <div className="evidence-list">
-                {requirements.map((item) => <EvidenceRow key={item.id} item={item} onClick={() => { setSelectedEvidence(item); setActivePage("Documents"); }} />)}
-                {deadlines.map((item) => <EvidenceRow key={item.id} item={item} onClick={() => { setSelectedEvidence(item); setActivePage("Documents"); }} />)}
-                {requirements.length + deadlines.length === 0 && <p>No candidate actions found. Review the extracted document text.</p>}
+          <div className="page-content secondary-page">
+            <div className="eyebrow"><ListChecks size={14} /> ACTION MANAGEMENT</div>
+            <div className="document-heading">
+              <div>
+                <h1>Action Planner</h1>
+                <p className="subtitle">Turn document requirements into a checklist you can actually work through.</p>
               </div>
-            ) : null}
-          </ModulePage>
+              <button
+                className="secondary-button"
+                onClick={() => {
+                  const text = [
+                    "CLEARSTEP ACTION PLAN",
+                    ...actions.map((item, index) => `${item.completed ? "[x]" : "[ ]"} ${index + 1}. ${item.text} (Page ${item.pages.join(", ")})`),
+                  ].join("\n");
+                  void navigator.clipboard?.writeText(text);
+                }}
+                disabled={actions.length === 0}
+              >
+                Copy plan
+              </button>
+            </div>
+
+            {!document ? (
+              <div className="empty-state">
+                <div className="coming-icon"><ListChecks size={26} /></div>
+                <h2>Your action plan will appear here</h2>
+                <p>Upload a PDF first. CLEARSTEP will turn detected requirements and time limits into a reviewable checklist.</p>
+                <button className="primary-button" onClick={() => fileInput.current?.click()}>Upload a document</button>
+              </div>
+            ) : (
+              <>
+                <section className="plan-progress-card">
+                  <div className="plan-progress-top">
+                    <div><strong>{actions.filter((item) => item.completed).length} of {actions.length} steps completed</strong><p>Mark each step as you finish it. Check the source PDF before acting.</p></div>
+                    <span>{actions.length ? Math.round(actions.filter((item) => item.completed).length / actions.length * 100) : 0}%</span>
+                  </div>
+                  <div className="plan-progress-track"><span style={{ width: `${actions.length ? actions.filter((item) => item.completed).length / actions.length * 100 : 0}%` }} /></div>
+                </section>
+
+                <div className="add-action-row">
+                  <input
+                    value={newActionText}
+                    onChange={(event) => setNewActionText(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && newActionText.trim()) {
+                        setActions((current) => [...current, { id: `manual-${Date.now()}`, text: newActionText.trim(), source: "Added manually", pages: [], completed: false }]);
+                        setNewActionText("");
+                      }
+                    }}
+                    placeholder="Add your own task..."
+                    aria-label="New task"
+                  />
+                  <button
+                    className="primary-button"
+                    disabled={!newActionText.trim()}
+                    onClick={() => {
+                      setActions((current) => [...current, { id: `manual-${Date.now()}`, text: newActionText.trim(), source: "Added manually", pages: [], completed: false }]);
+                      setNewActionText("");
+                    }}
+                  ><Plus size={16} /> Add step</button>
+                </div>
+
+                {actions.length ? (
+                  <div className="action-checklist">
+                    {actions.map((item, index) => (
+                      <div className={`action-task ${item.completed ? "completed" : ""}`} key={item.id}>
+                        <label className="action-task-main">
+                          <input
+                            type="checkbox"
+                            checked={item.completed}
+                            onChange={(event) => setActions((current) => current.map((action) => action.id === item.id ? { ...action, completed: event.target.checked } : action))}
+                          />
+                          <span className="action-task-copy">
+                            <strong>{item.text}</strong>
+                            <small>{item.source} · {item.pages.length ? `Source page${item.pages.length > 1 ? "s" : ""} ${item.pages.join(", ")}` : "Personal task"}</small>
+                          </span>
+                        </label>
+                        <button className="icon-button action-remove" onClick={() => setActions((current) => current.filter((action) => action.id !== item.id))} aria-label={`Remove task ${index + 1}`}><Trash2 size={16} /></button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state compact"><AlertCircle size={23} /><h3>No clear action candidates found</h3><p>Add your own steps above. The document's extracted text remains available in Documents for review.</p></div>
+                )}
+                <div className="notice-card"><ShieldCheck size={20} /><div><strong>Review before acting</strong><p>These checklist items are generated from text-pattern matches. They are suggestions, not verified instructions. Confirm each item against its cited page in the original PDF.</p></div></div>
+              </>
+            )}
+          </div>
         )}
 
         {activePage === "Execution Workspace" && (
