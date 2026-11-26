@@ -1,3 +1,4 @@
+import React from "react";
 import { ArrowUpRight, CheckCircle2, FileText, ListChecks, Plus, ShieldCheck, Sparkles } from "lucide-react";
 import type { DragEvent } from "react";
 import type { DocumentResult } from "../../types";
