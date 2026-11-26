@@ -1202,3 +1202,82 @@ h1 {
     padding-top: 0;
   }
 }
+
+
+/* CLEARSTEP action planner */
+.plan-progress-card {
+  margin: 22px 0 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--panel);
+}
+.plan-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.plan-progress-top strong { color: var(--text); font-size: 13px; }
+.plan-progress-top p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+.plan-progress-top > span { color: var(--accent); font-size: 22px; font-weight: 700; }
+.plan-progress-track {
+  height: 7px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #eee8de;
+}
+.plan-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width .2s ease;
+}
+.add-action-row {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+}
+.add-action-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.add-action-row input:focus { outline: 2px solid #c98a69; outline-offset: 1px; }
+.action-checklist { display: grid; gap: 10px; margin: 18px 0; }
+.action-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+}
+.action-task-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.action-task-main input { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--accent); }
+.action-task-copy { display: grid; gap: 6px; min-width: 0; }
+.action-task-copy strong { color: var(--text); font-size: 12px; line-height: 1.6; font-weight: 600; overflow-wrap: anywhere; }
+.action-task-copy small { color: var(--muted); font-size: 10px; }
+.action-task.completed .action-task-copy strong { color: var(--muted); text-decoration: line-through; }
+.action-remove { flex: 0 0 auto; }
+@media (max-width: 600px) {
+  .add-action-row { flex-direction: column; }
+  .add-action-row .primary-button { justify-content: center; }
+}
