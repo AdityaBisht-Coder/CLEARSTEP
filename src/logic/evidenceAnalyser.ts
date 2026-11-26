@@ -30,14 +30,14 @@ function addEvidence(
 ) {
   const cleaned = cleanSentence(text);
   if (!cleaned) return;
-  const key = \`\${type}:\${cleaned.toLowerCase().replace(/[^a-z0-9@:/]+/g, " ").trim()}\`;
+  const key = type + ":" + cleaned.toLowerCase().replace(/[^a-z0-9@:/]+/g, " ").trim();
   const existing = map.get(key);
   if (existing) {
     if (!existing.pages.includes(page)) existing.pages.push(page);
     return;
   }
   map.set(key, {
-    id: \`evidence-\${map.size + 1}\`,
+    id: "evidence-" + (map.size + 1),
     type,
     title,
     text: cleaned,
