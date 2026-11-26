@@ -1,11 +1,11 @@
-import React from "react";
-import { AlertCircle, ListChecks, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, ListChecks, Plus, ShieldCheck, Trash2 }\nimport "./ActionPlanner.css"; from "lucide-react";
 import type { DocumentResult, PlannedAction } from "../../types";
 
 export default function ActionPlanner({ document, actions, setActions, onUpload }: {
   document: DocumentResult | null; actions: PlannedAction[]; setActions: (actions: PlannedAction[] | ((current: PlannedAction[]) => PlannedAction[])) => void; onUpload: () => void;
 }) {
-  const [newActionText, setNewActionText] = React.useState("");
+  const [newActionText, setNewActionText] = useState("");
   const completed = actions.filter((item) => item.completed).length;
   const addAction = () => {
     if (!newActionText.trim()) return;
