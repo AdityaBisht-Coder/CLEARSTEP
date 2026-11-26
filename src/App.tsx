@@ -62,7 +62,7 @@ export default function App() {
       {activePage === "Action Planner" && <ActionPlanner document={document} actions={actions} setActions={setActions} onUpload={onUpload} />}
       {activePage === "Prepared Documents" && <PreparedDocuments document={document} actions={actions} onUpload={onUpload} />}
       {activePage === "Execution Workspace" && <ModulePage title="Execution Workspace" description="Prepare digital tasks in a controlled workspace." document={document} icon="execution" />}
-      {activePage === "Verification Centre" && <ModulePage title="Verification Centre" description="Review the evidence supporting each proposed action." document={document} icon="verification" evidenceReviews={evidenceReviews} onReview={(id, status) => setEvidenceReviews((current) => ({ ...current, [id]: status }))} /> }
+      {activePage === "Verification Centre" && <ModulePage title="Verification Centre" description="Review the evidence supporting each proposed action." document={document} icon="verification" evidenceReviews={evidenceReviews} onReview={(id, status) => setEvidenceReviews((current) => { const next = { ...current }; if (status === null) delete next[id]; else next[id] = status; return next; })} /> }
     </main>
   </div>;
 }
