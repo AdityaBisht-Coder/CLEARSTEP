@@ -10,7 +10,7 @@ export default function ModulePage({ title, description, document, icon, evidenc
   document: DocumentResult | null;
   icon: "execution" | "verification";
   evidenceReviews?: Record<string, EvidenceReviewStatus>;
-  onReview?: (id: string, status: EvidenceReviewStatus) => void;
+  onReview?: (id: string, status: EvidenceReviewStatus | null) => void;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
   const isVerification = icon === "verification";
@@ -71,7 +71,7 @@ export default function ModulePage({ title, description, document, icon, evidenc
             <div className="verification-item-actions">
               <button className="verify-confirm" onClick={() => onReview?.(item.id, "confirmed")} disabled={status === "confirmed"}><Check size={15} /> Confirm</button>
               <button className="verify-reject" onClick={() => onReview?.(item.id, "rejected")} disabled={status === "rejected"}><X size={15} /> Reject</button>
-              {status && <button className="verify-reset" onClick={() => onReview?.(item.id, "rejected")}><RotateCcw size={14} /> Reset</button>}
+              {status && <button className="verify-reset" onClick={() => onReview?.(item.id, null)}><RotateCcw size={14} /> Reset</button>}
             </div>
           </article>;
         })}</div>}
