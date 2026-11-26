@@ -1,3 +1,4 @@
+import React from "react";
 import { AlertCircle, ListChecks, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import type { DocumentResult, PlannedAction } from "../../types";
 
