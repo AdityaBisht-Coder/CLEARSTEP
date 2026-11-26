@@ -1,39 +1,95 @@
 import type { Evidence, ExtractedPage } from "../types";
 
+const MONTH = "(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
+const DATE_PATTERN = new RegExp(
+  String.raw`\\b(?:\\d{1,2}(?:st|nd|rd|th)?\\s+${MONTH}\\s+\\d{4}| ${MONTH}\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})\\b`.replace("| ", "|"),
+  "i"
+);
+const RELATIVE_TIME = /\\bwithin\\s+\\d+\\s+(?:(?:calendar|business)\\s+)?(?:hours?|days?|weeks?)\\b/i;
+const ACTION_VERB = /\\b(?:submit|upload|provide|attach|include|complete|register|send|ensure|obtain|prepare|contact|select|create|save|fill(?: in| out)?|sign|email|apply|deliver|present|confirm|return)\\b/i;
+const DEADLINE_CUE = /\\b(?:deadline|due date|last date|submit(?:ted)? by|apply by|applications? close|closes? on|no later than|on or before|before)\\b/i;
+
+function splitSentences(text: string): string[] {
+  return text
+    .replace(/[•▪●]/g, " ")
+    .split(/(?<=[.!?])\\s+|\\n+/)
+    .map((part) => part.replace(/\\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+function cleanSentence(value: string): string {
+  return value
+    .replace(/^[-*•\\s]+/, "")
+    .replace(/\\s+/g, " ")
+    .replace(/^[“"']|[”"']$/g, "")
+    .trim();
+}
+
+function addEvidence(
+  map: Map<string, Evidence>,
+  type: Evidence["type"],
+  title: string,
+  text: string,
+  page: number
+) {
+  const cleaned = cleanSentence(text);
+  if (!cleaned) return;
+  const key = `${type}:${cleaned.toLowerCase().replace(/[^a-z0-9@:/]+/g, " ").trim()}`;
+  const existing = map.get(key);
+  if (existing) {
+    if (!existing.pages.includes(page)) existing.pages.push(page);
+    return;
+  }
+  map.set(key, {
+    id: `evidence-${map.size + 1}`,
+    type,
+    title,
+    text: cleaned,
+    page,
+    pages: [page],
+  });
+}
+
 export function analyseText(pages: ExtractedPage[]): Evidence[] {
-  const evidenceByKey = new Map<string, Evidence>();
-  const patterns: { type: Evidence["type"]; title: string; regex: RegExp }[] = [
-    { type: "deadline", title: "Possible calendar deadline", regex: /\b(?:deadline|due date|last date|submit(?:ted)? before|on or before)\b[^.!?\n]{0,120}/gi },
-    { type: "deadline", title: "Relative time limit", regex: /\bwithin\s+\d+\s+(?:(?:calendar|business)\s+)?(?:hours?|days?|weeks?)\b/gi },
-    { type: "email", title: "Email address", regex: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi },
-    { type: "link", title: "Web link", regex: /https?:\/\/[^\s<>"')\]]+/gi },
-    { type: "requirement", title: "Possible requirement", regex: /\b(?:must|required to|should|need to|needs to|shall|submit|attach|include|provide|upload|register)\b[^.!?\n]{0,180}/gi },
-  ];
+  const evidence = new Map<string, Evidence>();
 
   for (const page of pages) {
-    for (const pattern of patterns) {
-      for (const match of page.text.matchAll(pattern.regex)) {
-        let text = match[0].trim().replace(/\s+/g, " ");
-        if (pattern.type === "link") text = text.replace(/[.,;:!?]+$/g, "");
-        if (pattern.type === "requirement" && (/\bendpoint\b/i.test(text) || /https?:\/\//i.test(text))) continue;
-        if (!text) continue;
-        const normalized = pattern.type === "link" ? text.toLowerCase().replace(/#.*$/, "") : text.toLowerCase().replace(/\s+/g, " ").trim();
-        const key = `${pattern.type}:${normalized}`;
-        const existing = evidenceByKey.get(key);
-        if (existing) {
-          if (!existing.pages.includes(page.page)) existing.pages.push(page.page);
-          continue;
-        }
-        evidenceByKey.set(key, {
-          id: `evidence-${evidenceByKey.size + 1}`,
-          type: pattern.type,
-          title: pattern.title,
-          text,
-          page: page.page,
-          pages: [page.page],
-        });
+    const sentences = splitSentences(page.text);
+
+    for (const sentence of sentences) {
+      const hasAbsoluteDate = DATE_PATTERN.test(sentence);
+      const hasRelativeTime = RELATIVE_TIME.test(sentence);
+      const hasDeadlineCue = DEADLINE_CUE.test(sentence);
+
+      // A date is treated as a candidate deadline only when its sentence
+      // contains an instruction/deadline cue. Relative limits stand alone.
+      if ((hasAbsoluteDate && hasDeadlineCue) || hasRelativeTime) {
+        addEvidence(evidence, "deadline", "Possible deadline", sentence, page.page);
+      }
+
+      // Keep complete actionable instructions; exclude headings and conditions.
+      const isHeading = sentence.endsWith(":") || /\\b(?:all|following) conditions\\b/i.test(sentence);
+      const isConditionOnly = /\\bmust be\\b/i.test(sentence) && !ACTION_VERB.test(sentence);
+      if (
+        sentence.length >= 35 &&
+        ACTION_VERB.test(sentence) &&
+        !isHeading &&
+        !isConditionOnly &&
+        !/https?:\\/\\//i.test(sentence)
+      ) {
+        addEvidence(evidence, "requirement", "Action requirement", sentence, page.page);
       }
     }
+
+    for (const match of page.text.matchAll(/\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi)) {
+      addEvidence(evidence, "email", "Email address", match[0], page.page);
+    }
+
+    for (const match of page.text.matchAll(/https?:\\/\\/[^\\s<>"')\\]]+/gi)) {
+      const url = match[0].replace(/[.,;:!?]+$/g, "");
+      addEvidence(evidence, "link", "Web link", url, page.page);
+    }
   }
-  return Array.from(evidenceByKey.values());
+
+  return Array.from(evidence.values());
 }
