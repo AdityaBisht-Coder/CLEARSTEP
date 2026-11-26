@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";\nimport type { DragEvent } from "react";
+import { useRef, useState } from "react";
+import type { DragEvent } from "react";
 import { AlertCircle, X } from "lucide-react";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
