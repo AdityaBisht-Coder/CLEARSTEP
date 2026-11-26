@@ -1,6 +1,6 @@
 import { AlertCircle, CalendarDays, ExternalLink, FileText, ListChecks, LoaderCircle, Mail, Plus, Trash2, X } from "lucide-react";
 import type { DocumentResult, Evidence } from "../../types";
-import StatCard from "../../components/shared/StatCard";
+import StatCard from "../../components/shared/StatCard";\nimport "./Documents.css";
 
 export default function Documents({ document, loading, onUpload, onRemove, selectedEvidence, onSelectEvidence }: {
   document: DocumentResult | null; loading: boolean; onUpload: () => void; onRemove: () => void;
