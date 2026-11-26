@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState } from "react";\nimport type { DragEvent } from "react";
 import { AlertCircle, X } from "lucide-react";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
@@ -43,7 +43,7 @@ export default function App() {
     } finally { setLoading(false); }
   }
 
-  const onDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault(); setDragging(false); void selectFile(event.dataTransfer.files?.[0]);
   };
   const onUpload = () => fileInput.current?.click();
