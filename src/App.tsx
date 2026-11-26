@@ -9,6 +9,7 @@ import ActionPlanner from "./pages/ActionPlanner/ActionPlanner";
 import PreparedDocuments from "./pages/PreparedDocuments/PreparedDocuments";
 import ModulePage from "./pages/ModulePage/ModulePage";
 import { extractPdf } from "./logic/pdfExtractor";
+import { buildActionPlan } from "./logic/actionPlanner";
 import type { DocumentResult, Evidence, Page, PlannedAction } from "./types";
 
 export default function App() {
@@ -33,11 +34,9 @@ export default function App() {
     setError(""); setLoading(true); setActivePage("Documents");
     try {
       const result = await extractPdf(file);
-      setDocument(result); setSelectedEvidence(null);
-      setActions(result.evidence
-        .filter((item) => item.type === "requirement" || item.type === "deadline")
-        .filter((item) => item.text.length >= 28)
-        .map((item) => ({ id: item.id, text: item.text, source: item.title, pages: item.pages, completed: false })));
+      setDocument(result);
+      setSelectedEvidence(null);
+      setActions(buildActionPlan(result));
     } catch (err) {
       console.error(err);
       setError("We couldn't read this PDF. It may be damaged, password-protected, or scanned without selectable text.");
