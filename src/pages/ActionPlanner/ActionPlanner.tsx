@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, ListChecks, Plus, ShieldCheck, Trash2 }\nimport "./ActionPlanner.css"; from "lucide-react";
+import { AlertCircle, ListChecks, Plus, ShieldCheck, Trash2 } from "lucide-react";\nimport "./ActionPlanner.css";
 import type { DocumentResult, PlannedAction } from "../../types";
 
 export default function ActionPlanner({ document, actions, setActions, onUpload }: {
