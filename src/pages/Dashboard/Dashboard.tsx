@@ -1,11 +1,10 @@
-import React from "react";
+import type { ReactNode, DragEvent } from "react";
 import { ArrowUpRight, CheckCircle2, FileText, ListChecks, Plus, ShieldCheck, Sparkles } from "lucide-react";
-import type { DragEvent } from "react";
 import type { DocumentResult } from "../../types";
 import StatCard from "../../components/shared/StatCard";
 import UploadArea from "../../components/shared/UploadArea";
 
-function WorkflowCard({ number, icon, title, description }: { number: string; icon: React.ReactNode; title: string; description: string }) {
+function WorkflowCard({ number, icon, title, description }: { number: string; icon: ReactNode; title: string; description: string }) {
   return <div className="workflow-card"><div className="workflow-top"><div className="workflow-icon">{icon}</div><span>{number}</span></div><h4>{title}</h4><p>{description}</p></div>;
 }
 
