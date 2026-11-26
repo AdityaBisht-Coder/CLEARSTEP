@@ -1,12 +1,12 @@
 import type { DocumentResult, PlannedAction } from "../types";
 
-const ACTION_VERB = /\\b(?:submit|upload|provide|attach|include|complete|register|send|obtain|prepare|contact|select|create|save|fill(?: in| out)?|sign|email|apply|deliver|present|confirm|return)\\b/i;
+const ACTION_VERB = /\b(?:submit|upload|provide|attach|include|complete|register|send|obtain|prepare|contact|select|create|save|fill(?: in| out)?|sign|email|apply|deliver|present|confirm|return)\b/i;
 
 function toInstruction(sentence: string): string {
   return sentence
-    .replace(/^(?:applicants?|students?|users?|you)\\s+(?:must|should|need to|required to)\\s+/i, "")
-    .replace(/^you\\s+/i, "")
-    .replace(/\\s+/g, " ")
+    .replace(/^(?:applicants?|students?|users?|you)\s+(?:must|should|need to|required to)\s+/i, "")
+    .replace(/^you\s+/i, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
