@@ -10,13 +10,14 @@ import PreparedDocuments from "./pages/PreparedDocuments/PreparedDocuments";
 import ModulePage from "./pages/ModulePage/ModulePage";
 import { extractPdf } from "./logic/pdfExtractor";
 import { buildActionPlan } from "./logic/actionPlanner";
-import type { DocumentResult, Evidence, Page, PlannedAction } from "./types";
+import type { DocumentResult, Evidence, EvidenceReviewStatus, Page, PlannedAction } from "./types";
 
 export default function App() {
   const [activePage, setActivePage] = useState<Page>("Dashboard");
   const [document, setDocument] = useState<DocumentResult | null>(null);
   const [actions, setActions] = useState<PlannedAction[]>([]);
   const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
+  const [evidenceReviews, setEvidenceReviews] = useState<Record<string, EvidenceReviewStatus>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -36,6 +37,7 @@ export default function App() {
       const result = await extractPdf(file);
       setDocument(result);
       setSelectedEvidence(null);
+      setEvidenceReviews({});
       setActions(buildActionPlan(result));
     } catch (err) {
       console.error(err);
@@ -60,7 +62,7 @@ export default function App() {
       {activePage === "Action Planner" && <ActionPlanner document={document} actions={actions} setActions={setActions} onUpload={onUpload} />}
       {activePage === "Prepared Documents" && <PreparedDocuments document={document} actions={actions} onUpload={onUpload} />}
       {activePage === "Execution Workspace" && <ModulePage title="Execution Workspace" description="Prepare digital tasks in a controlled workspace." document={document} icon="execution" />}
-      {activePage === "Verification Centre" && <ModulePage title="Verification Centre" description="Review the evidence supporting each proposed action." document={document} icon="verification" />}
+      {activePage === "Verification Centre" && <ModulePage title="Verification Centre" description="Review the evidence supporting each proposed action." document={document} icon="verification" evidenceReviews={evidenceReviews} onReview={(id, status) => setEvidenceReviews((current) => ({ ...current, [id]: status }))} /> }
     </main>
   </div>;
 }
