@@ -1,4 +1,4 @@
-import { FileText, Globe, LayoutDashboard, ListChecks, ShieldCheck, Sparkles, Settings, FileOutput, X } from "lucide-react";
+import { FileText, Globe, LayoutDashboard, ListChecks, ShieldCheck, Sparkles, Settings, FileOutput, X, ClipboardCheck } from "lucide-react";
 import type { Page } from "../../types";
 
 const items = [
@@ -7,6 +7,7 @@ const items = [
   { name: "Action Planner" as Page, icon: ListChecks },
   { name: "Prepared Documents" as Page, icon: FileOutput },
   { name: "Execution Workspace" as Page, icon: Globe },
+  { name: "Demo Portal" as Page, icon: ClipboardCheck },
   { name: "Verification Centre" as Page, icon: ShieldCheck },
 ];
 
