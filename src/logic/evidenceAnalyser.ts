@@ -6,8 +6,8 @@ const DATE_PATTERN = new RegExp(
   MONTH + "\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})\\b",
   "i"
 );
-const RELATIVE_TIME = /\\bwithin\\s+\\d+\\s+(?:(?:calendar|business)\\s+)?(?:hours?|days?|weeks?)\\b/i;
-const DEADLINE_CUE = /\\b(?:deadline|due date|last date|submit(?:ted)? by|apply by|applications? close|closes? on|no later than|on or before|before|by)\\b/i;
+const RELATIVE_TIME = /\bwithin\s+\d+\s+(?:(?:calendar|business)\s+)?(?:hours?|days?|weeks?)\b/i;
+const DEADLINE_CUE = /\b(?:deadline|due date|last date|submit(?:ted)? by|apply by|applications? close|closes? on|no later than|on or before|before|by)\b/i;
 
 const ACTIONS = "(?:submit|upload|provide|attach|include|complete|register|send|obtain|prepare|contact|select|create|save|fill(?: in| out)?|sign|email|apply|deliver|present|confirm|return|pay|bring|visit|download|print|check|review|enter|choose|verify)";
 const IMPERATIVE = new RegExp("^" + ACTIONS + "\\b", "i");
@@ -17,36 +17,36 @@ const MODAL_INSTRUCTION = new RegExp(
   "i"
 );
 const GENERIC_OR_META = /^(?:this guide|this document|this form|the following|important information|general information|for more information|note:|instructions?:|requirements?:|eligibility criteria:?|all (?:of )?the following conditions:?)/i;
-const URL_PATTERN = /https?:\\/\\//i;
+const URL_PATTERN = /https?:\/\//i;
 
 function cleanSentence(value: string): string {
   return value
-    .replace(/^[\\s\\-–—*•▪●]+/, "")
-    .replace(/\\s+/g, " ")
+    .replace(/^[\s\-–—*•▪●]+/, "")
+    .replace(/\s+/g, " ")
     .replace(/^[“"']|[”"']$/g, "")
     .trim();
 }
 
 function splitText(text: string): string[] {
   return text
-    .replace(/[•▪●]/g, "\\n")
-    .split(/(?<=[.!?])\\s+|\\n+/)
+    .replace(/[•▪●]/g, "\n")
+    .split(/(?<=[.!?])\s+|\n+/)
     .map(cleanSentence)
     .filter(Boolean);
 }
 
 function normalise(value: string): string {
   return value.toLowerCase()
-    .replace(/\\b(the|a|an|to|of|and|or|your|their|please)\\b/g, " ")
+    .replace(/\b(the|a|an|to|of|and|or|your|their|please)\b/g, " ")
     .replace(/[^a-z0-9@]+/g, " ")
-    .replace(/\\s+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function dateKey(text: string): string | null {
   const match = text.match(DATE_PATTERN);
   if (!match) return null;
-  const parsed = new Date(match[0].replace(/(\\d)(st|nd|rd|th)\\b/i, "$1"));
+  const parsed = new Date(match[0].replace(/(\d)(st|nd|rd|th)\b/i, "$1"));
   if (Number.isNaN(parsed.getTime())) return match[0].toLowerCase().replace(/[^a-z0-9]/g, "");
   return parsed.toISOString().slice(0, 10);
 }
@@ -65,7 +65,6 @@ function addEvidence(
   const existing = map.get(key);
   if (existing) {
     if (!existing.pages.includes(page)) existing.pages.push(page);
-    // Keep the most informative version when the same item is repeated.
     if (cleaned.length > existing.text.length) existing.text = cleaned;
     return;
   }
@@ -82,7 +81,7 @@ function addEvidence(
 function isActionableRequirement(sentence: string): boolean {
   if (sentence.length < 28 || sentence.length > 280) return false;
   if (sentence.endsWith(":") || GENERIC_OR_META.test(sentence) || URL_PATTERN.test(sentence)) return false;
-  if (/\\b(?:this guide|this document|this section)\\b/i.test(sentence)) return false;
+  if (/\b(?:this guide|this document|this section)\b/i.test(sentence)) return false;
   return IMPERATIVE.test(sentence) || MODAL_INSTRUCTION.test(sentence);
 }
 
@@ -97,7 +96,7 @@ export function analyseText(pages: ExtractedPage[]): Evidence[] {
       const hasRelativeTime = RELATIVE_TIME.test(sentence);
       const hasDeadlineCue = DEADLINE_CUE.test(sentence);
 
-      if ((hasAbsoluteDate && hasDeadlineCue) || (hasRelativeTime && (hasDeadlineCue || /^within\\b/i.test(sentence)))) {
+      if ((hasAbsoluteDate && hasDeadlineCue) || (hasRelativeTime && (hasDeadlineCue || /^within\b/i.test(sentence)))) {
         addEvidence(evidence, "deadline", "Possible deadline", sentence, page.page);
       }
 
@@ -106,11 +105,11 @@ export function analyseText(pages: ExtractedPage[]): Evidence[] {
       }
     }
 
-    for (const match of page.text.matchAll(/\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi)) {
+    for (const match of page.text.matchAll(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi)) {
       addEvidence(evidence, "email", "Email address", match[0], page.page);
     }
 
-    for (const match of page.text.matchAll(/https?:\\/\\/[^\\s<>"')\\]]+/gi)) {
+    for (const match of page.text.matchAll(/https?:\/\/[^\s<>"')\]]+/gi)) {
       const url = match[0].replace(/[.,;:!?]+$/g, "");
       addEvidence(evidence, "link", "Web link", url, page.page);
     }
