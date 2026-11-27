@@ -79,7 +79,7 @@ function addEvidence(
 }
 
 function isActionableRequirement(sentence: string): boolean {
-  if (sentence.length < 28 || sentence.length > 280) return false;
+  if (sentence.length < 12 || sentence.length > 280) return false;
   if (sentence.endsWith(":") || GENERIC_OR_META.test(sentence) || URL_PATTERN.test(sentence)) return false;
   if (/\b(?:this guide|this document|this section)\b/i.test(sentence)) return false;
   return IMPERATIVE.test(sentence) || MODAL_INSTRUCTION.test(sentence);
