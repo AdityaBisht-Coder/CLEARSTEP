@@ -8,12 +8,13 @@ import Documents from "./pages/Documents/Documents";
 import ActionPlanner from "./pages/ActionPlanner/ActionPlanner";
 import PreparedDocuments from "./pages/PreparedDocuments/PreparedDocuments";
 import ModulePage from "./pages/ModulePage/ModulePage";
+import DemoPortal from "./pages/DemoPortal/DemoPortal";
 import { extractPdf } from "./logic/pdfExtractor";
 import { buildActionPlan } from "./logic/actionPlanner";
 import type { DocumentResult, Evidence, EvidenceReviewStatus, Page, PlannedAction } from "./types";
 
 export default function App() {
-  const [activePage, setActivePage] = useState<Page>("Dashboard");
+  const [activePage, setActivePage] = useState<Page>(() => new URLSearchParams(window.location.search).get("demo") === "application" ? "Demo Portal" : "Dashboard");
   const [document, setDocument] = useState<DocumentResult | null>(null);
   const [actions, setActions] = useState<PlannedAction[]>([]);
   const [selectedEvidence, setSelectedEvidence] = useState<Evidence | null>(null);
@@ -61,7 +62,7 @@ export default function App() {
       {activePage === "Documents" && <Documents document={document} loading={loading} onUpload={onUpload} onRemove={onRemoveDocument} selectedEvidence={selectedEvidence} onSelectEvidence={setSelectedEvidence} />}
       {activePage === "Action Planner" && <ActionPlanner document={document} actions={actions} setActions={setActions} onUpload={onUpload} />}
       {activePage === "Prepared Documents" && <PreparedDocuments document={document} actions={actions} onUpload={onUpload} />}
-      {activePage === "Execution Workspace" && <ModulePage title="Execution Workspace" description="Prepare digital tasks in a controlled workspace." document={document} icon="execution" />}
+      {activePage === "Execution Workspace" && <ModulePage title="Execution Workspace" description="Prepare digital tasks in a controlled workspace." document={document} icon="execution" />}\n      {activePage === "Demo Portal" && <DemoPortal document={document} />}
       {activePage === "Verification Centre" && <ModulePage title="Verification Centre" description="Review the evidence supporting each proposed action." document={document} icon="verification" evidenceReviews={evidenceReviews} onReview={(id, status) => setEvidenceReviews((current) => { const next = { ...current }; if (status === null) delete next[id]; else next[id] = status; return next; })} /> }
     </main>
   </div>;
