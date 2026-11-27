@@ -1,19 +1,23 @@
 import type { DocumentResult, PlannedAction } from "../types";
 
-const ACTION_VERB = /\b(?:submit|upload|provide|attach|include|complete|register|send|obtain|prepare|contact|select|create|save|fill(?: in| out)?|sign|email|apply|deliver|present|confirm|return)\b/i;
+const ACTION_START = /^(?:(?:all )?(?:applicants?|students?|users?|candidates?|participants?)\\s+(?:must|should|shall|need to|are required to|required to)\\s+|you\\s+(?:must|should|need to)\\s+)?(?:submit|upload|provide|attach|include|complete|register|send|obtain|prepare|contact|select|create|save|fill(?: in| out)?|sign|email|apply|deliver|present|confirm|return|pay|bring|visit|download|print|check|review|enter|choose|verify)\\b/i;
 
 function toInstruction(sentence: string): string {
   return sentence
-    .replace(/^(?:applicants?|students?|users?|you)\s+(?:must|should|need to|required to)\s+/i, "")
-    .replace(/^you\s+/i, "")
-    .replace(/\s+/g, " ")
+    .replace(/^(?:(?:all )?(?:applicants?|students?|users?|candidates?|participants?)\\s+(?:must|should|shall|need to|are required to|required to)|you\\s+(?:must|should|need to))\\s+/i, "")
+    .replace(/^you\\s+/i, "")
+    .replace(/\\s+/g, " ")
     .trim();
+}
+
+function normalise(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\\s+/g, " ").trim();
 }
 
 export function buildActionPlan(document: DocumentResult): PlannedAction[] {
   const seen = new Set<string>();
   return document.evidence
-    .filter((item) => item.type === "requirement" && ACTION_VERB.test(item.text))
+    .filter((item) => item.type === "requirement" && ACTION_START.test(item.text))
     .map((item) => {
       const text = toInstruction(item.text);
       return {
@@ -25,8 +29,8 @@ export function buildActionPlan(document: DocumentResult): PlannedAction[] {
       };
     })
     .filter((item) => {
-      const key = item.text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-      if (!key || seen.has(key)) return false;
+      const key = normalise(item.text);
+      if (key.length < 18 || seen.has(key)) return false;
       seen.add(key);
       return true;
     });
