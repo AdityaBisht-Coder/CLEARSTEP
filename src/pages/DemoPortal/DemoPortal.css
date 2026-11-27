@@ -38,3 +38,26 @@
 .demo-side-note{padding:12px;background:#f4efe5;border-radius:8px;color:#777166;font-size:9px;line-height:1.6}
 @media(max-width:850px){.demo-layout{grid-template-columns:1fr}.demo-side-card{order:-1}.demo-side-card>p{max-width:650px}}
 @media(max-width:560px){.demo-fields{grid-template-columns:1fr}.demo-field-wide{grid-column:auto}.demo-form-card{padding:16px}.demo-form-actions{flex-direction:column}.demo-form-actions button{width:100%}.document-heading{gap:10px;align-items:flex-start}}
+
+/* CLEARSTEP → Lumi Memory bridge */
+.lumi-transfer-card{margin:20px 0 18px;padding:21px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+.lumi-transfer-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.lumi-transfer-heading>div>span{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--accent)}
+.lumi-transfer-heading h2{font-size:18px;margin:6px 0}
+.lumi-transfer-heading p,.lumi-transfer-note{font-size:10px;line-height:1.6;color:var(--muted)}
+.lumi-transfer-heading>strong{font-size:22px;color:var(--accent)}
+.lumi-transfer-empty{margin-top:14px;padding:14px;border-radius:8px;background:#f7f3eb;color:var(--muted);font-size:10px;line-height:1.7}
+.lumi-transfer-empty code{color:var(--accent);white-space:normal}
+.lumi-memory-list{display:grid;gap:8px;margin-top:15px}
+.lumi-memory-item{display:flex;align-items:flex-start;gap:11px;padding:12px;border:1px solid var(--border);border-radius:8px;background:#fffefa;cursor:pointer}
+.lumi-memory-item input{margin-top:3px;accent-color:var(--accent)}
+.lumi-memory-item>span{display:grid;gap:4px;min-width:0}
+.lumi-memory-item b{font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:.6px}
+.lumi-memory-item span span{font-size:11px;line-height:1.5;color:var(--text)}
+.lumi-memory-item small{font-size:9px;color:var(--muted)}
+.lumi-transfer-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:15px}
+.lumi-transfer-footer>span{font-size:9px;color:var(--muted)}
+.lumi-transfer-status{margin-top:12px;padding:11px;border-radius:8px;background:#edf1e8;color:#536d4d;font-size:10px;line-height:1.5}
+.lumi-transfer-note{display:flex;align-items:flex-start;gap:7px;margin:13px 0 0}
+.lumi-transfer-note svg{flex-shrink:0;color:#66825a}
+@media(max-width:560px){.lumi-transfer-card{padding:15px}.lumi-transfer-footer{align-items:stretch;flex-direction:column}.lumi-transfer-footer button{width:100%}}
