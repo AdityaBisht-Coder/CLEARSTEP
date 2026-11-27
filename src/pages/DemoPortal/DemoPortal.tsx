@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, ClipboardCheck, FileText, Play, RotateCcw, ShieldCheck } from "lucide-react";
 import type { DocumentResult } from "../../types";
+import { extractMemoryFragments } from "../../logic/memoryExtractor";
+import type { LumiMemoryFragment } from "../../logic/memoryExtractor";
 import "./DemoPortal.css";
 
 type FormData = { name: string; email: string; phone: string; dateOfBirth: string; institution: string; course: string; annualIncome: string; statement: string };
@@ -34,6 +36,13 @@ export default function DemoPortal({ document }: { document: DocumentResult | nu
   const [filled, setFilled] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showSources, setShowSources] = useState(false);
+  const memoryFragments = useMemo(() => extractMemoryFragments(document), [document]);
+  const [selectedMemoryIds, setSelectedMemoryIds] = useState<string[]>([]);
+  const [transferStatus, setTransferStatus] = useState("");
+  useEffect(() => {
+    setSelectedMemoryIds(memoryFragments.map((item) => item.id));
+    setTransferStatus("");
+  }, [memoryFragments]);
 
   useEffect(() => { setForm(extracted); setFilled(false); setSubmitted(false); }, [extracted]);
 
@@ -51,12 +60,82 @@ export default function DemoPortal({ document }: { document: DocumentResult | nu
   function update(key: keyof FormData, value: string) { setForm((current) => ({ ...current, [key]: value })); setSubmitted(false); }
   function prepareForm() { setForm(extracted); setFilled(true); setSubmitted(false); }
   function resetForm() { setForm(EMPTY); setFilled(false); setSubmitted(false); }
+  function transferMemoriesToLumi() {
+    const approved = memoryFragments.filter((item) => selectedMemoryIds.includes(item.id));
+    if (!approved.length) { setTransferStatus("Select at least one memory fragment first."); return; }
+
+    const popup = window.open("https://lumiworks.org/memory", "lumi-memory-import");
+    if (!popup) { setTransferStatus("Popup blocked. Allow popups for CLEARSTEP and try again."); return; }
+
+    const requestId = crypto.randomUUID();
+    let sent = false;
+    setTransferStatus("Waiting for Lumi Memory to connect…");
+
+    const cleanup = () => {
+      window.removeEventListener("message", onMessage);
+      window.clearTimeout(timeout);
+    };
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== "https://lumiworks.org" || event.source !== popup) return;
+      if (event.data?.type === "CLEARSTEP_LUMI_READY" && !sent) {
+        sent = true;
+        setTransferStatus("Lumi connected. Sending approved memories…");
+        popup.postMessage({
+          type: "CLEARSTEP_IMPORT_MEMORIES",
+          protocol: 1,
+          requestId,
+          approved: true,
+          memories: approved.map((item) => ({
+            category: item.category,
+            content: item.content,
+            sourcePage: item.sourcePage,
+          })),
+        }, "https://lumiworks.org");
+      } else if (event.data?.type === "CLEARSTEP_IMPORT_RESULT" && event.data.requestId === requestId) {
+        cleanup();
+        if (event.data.ok) {
+          setTransferStatus("Success: Lumi saved " + event.data.saved + " memories; " + event.data.duplicates + " duplicates skipped.");
+        } else {
+          setTransferStatus("Lumi could not import the memories: " + (event.data.error || "Unknown error"));
+        }
+      }
+    };
+    window.addEventListener("message", onMessage);
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      setTransferStatus("Connection timed out. Keep the Lumi Memory tab open, then try again.");
+    }, 20000);
+  }
+
 
   return <div className="page-content secondary-page demo-portal-page">
     <div className="eyebrow"><ClipboardCheck size={14} /> CONTROLLED AUTOMATION DEMONSTRATION</div>
     <div className="document-heading"><div><h1>Scholarship application portal</h1><p className="subtitle">A fictional portal used to demonstrate evidence-linked form preparation.</p></div><span className="demo-mode-pill">SIMULATION</span></div>
     <div className="demo-safety"><ShieldCheck size={19}/><div><strong>Safe demo environment</strong><p>This is not a real scholarship website. No information is transmitted or stored on a server. The final action only creates a local simulation receipt.</p></div></div>
     {!document && <div className="demo-no-document"><FileText size={22}/><div><strong>Upload the CLEARSTEP demonstration PDF first</strong><p>Then return here. The form will be prepared from labelled fields found in that document.</p></div></div>}
+    <section className="lumi-transfer-card">
+      <div className="lumi-transfer-heading">
+        <div><span>LIVE INTEGRATION · LUMI MEMORY</span><h2>Extract memories from this PDF</h2>
+        <p>Only clearly labelled statements are considered. Review the fragments and approve the transfer.</p></div>
+        <strong>{memoryFragments.length} found</strong>
+      </div>
+      {memoryFragments.length === 0 ? <div className="lumi-transfer-empty">
+        No labelled memory fragments found. Use lines such as <code>PROJECT: Building a personal finance tracker.</code> and upload the PDF again.
+      </div> : <>
+        <div className="lumi-memory-list">
+          {memoryFragments.map((item: LumiMemoryFragment) => <label className="lumi-memory-item" key={item.id}>
+            <input type="checkbox" checked={selectedMemoryIds.includes(item.id)} onChange={(event) => setSelectedMemoryIds((current) => event.target.checked ? [...current, item.id] : current.filter((id) => id !== item.id))} />
+            <span><b>{item.category}</b><span>{item.content}</span><small>Evidence: PDF page {item.sourcePage}</small></span>
+          </label>)}
+        </div>
+        <div className="lumi-transfer-footer">
+          <span>{selectedMemoryIds.length} of {memoryFragments.length} selected · Human approval required</span>
+          <button className="primary-button" onClick={transferMemoriesToLumi} disabled={!selectedMemoryIds.length}>Approve & transfer to Lumi</button>
+        </div>
+      </>}
+      {transferStatus && <div className="lumi-transfer-status" role="status">{transferStatus}</div>}
+      <p className="lumi-transfer-note"><ShieldCheck size={15}/> CLEARSTEP sends only the fragments you select. Lumi stores them in its existing local memory database; duplicate entries are skipped.</p>
+    </section>
     <div className="demo-layout">
       <section className="demo-form-card">
         <div className="demo-form-heading"><div><span>APPLICATION FORM</span><h2>Applicant details</h2></div><span className="demo-step">01 / 03</span></div>
