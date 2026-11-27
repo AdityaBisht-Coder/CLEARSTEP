@@ -1,4 +1,4 @@
-export type Page = "Dashboard" | "Documents" | "Action Planner" | "Prepared Documents" | "Execution Workspace" | "Verification Centre";
+export type Page = "Dashboard" | "Documents" | "Action Planner" | "Prepared Documents" | "Execution Workspace" | "Verification Centre" | "Demo Portal";
 
 export type EvidenceReviewStatus = "confirmed" | "rejected";
 
